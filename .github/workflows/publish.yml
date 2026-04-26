@@ -145,6 +145,7 @@ jobs:
       #    no javadoc, no signatures — GitHub Packages has no such requirements).
       # ──────────────────────────────────────────────────────────────────────
       - name: Publish to GitHub Packages
+        continue-on-error: true   # 409 Conflict if version already exists — don't block Maven Central
         run: mvn -B deploy -DskipTests -P github --no-transfer-progress
         env:
           GITHUB_ACTOR: ${{ github.actor }}
