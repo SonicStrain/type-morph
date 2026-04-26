@@ -26,6 +26,13 @@
             <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
 
+        <!-- AOP support: @Aspect, ProceedingJoinPoint. Optional at runtime (users may exclude). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Generates IDE completion metadata for @ConfigurationProperties. Optional at runtime. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

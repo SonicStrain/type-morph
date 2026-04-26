@@ -9,6 +9,7 @@ import io.typemorph.exception.MorphNullElementException;
 import io.typemorph.exception.MorphNullSourceException;
 import io.typemorph.exception.MorphTypeMismatchException;
 import io.typemorph.mapping.MorphMapping;
+import io.typemorph.reflect.AnnotationMorphScanner;
 import io.typemorph.registry.DefaultMorphRegistry;
 import io.typemorph.registry.MorphRegistry;
 import io.typemorph.util.GenericTypeResolver;
@@ -53,6 +54,70 @@ public class TypeMorph {
     public TypeMorph(MorphRegistry registry, MorphConfiguration config) {
         this.registry = registry;
         this.config = config;
+    }
+
+    // -------------------------------------------------------------------------
+    // Registration API
+    // -------------------------------------------------------------------------
+
+    // -------------------------------------------------------------------------
+    // Annotation-driven / reflective registration
+    // -------------------------------------------------------------------------
+
+    /**
+     * Scans the given classes for {@link io.typemorph.annotation.TypeMorphClass} annotations
+     * and registers reflective field-level mappings automatically.
+     *
+     * <p>This is the main entry-point for annotation-driven mapping:
+     * <pre>
+     *   TypeMorph morph = new TypeMorph().scan(OrderEntity.class, ProductDto.class);
+     *   OrderDto dto = morph.map(entity, OrderDto.class);
+     * </pre>
+     *
+     * <p>Classes that are not annotated with {@code @TypeMorphClass} are silently skipped.
+     * Configuration errors (incompatible field types, final POJO fields, etc.) throw
+     * {@link io.typemorph.exception.MorphConfigurationException} immediately so problems
+     * surface at startup, not at first mapping call.
+     *
+     * @param annotatedClasses classes to inspect; may include un-annotated classes (ignored)
+     * @return this instance for fluent chaining
+     */
+    public TypeMorph scan(Class<?>... annotatedClasses) {
+        new AnnotationMorphScanner(this).scan(annotatedClasses);
+        return this;
+    }
+
+    /**
+     * Ensures {@code input} is an instance of {@code targetType}, mapping it if necessary.
+     *
+     * <p>Use this as a zero-boilerplate adapter at method boundaries when a caller passes
+     * either the target type directly or a compatible source type:
+     * <pre>
+     *   public void processOrder(Object input) {
+     *       OrderDto dto = morph.ensureType(input, OrderDto.class);
+     *       // dto is guaranteed to be OrderDto regardless of what input was
+     *   }
+     * </pre>
+     *
+     * <ul>
+     *   <li>If {@code input} is already an instance of {@code targetType}, it is returned as-is.</li>
+     *   <li>Otherwise, {@code morph.map(input, targetType)} is called to convert it.</li>
+     *   <li>If {@code input} is {@code null}, returns {@code null} (or throws if
+     *       {@link NullHandling#THROW_EXCEPTION} is configured).</li>
+     * </ul>
+     *
+     * @param input      the object to inspect (may already be the target type)
+     * @param targetType the desired output type
+     * @return an instance of targetType
+     */
+    public <T> T ensureType(Object input, Class<T> targetType) {
+        if (input == null) {
+            return handleNullSource();
+        }
+        if (targetType.isInstance(input)) {
+            return targetType.cast(input);
+        }
+        return map(input, targetType);
     }
 
     // -------------------------------------------------------------------------
