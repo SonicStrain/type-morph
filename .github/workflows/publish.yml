@@ -8,19 +8,11 @@
 # ─── ONE-TIME SETUP CHECKLIST ───────────────────────────────────────────────
 #
 # A. Maven Central namespace
-#    ┌─────────────────────────────────────────────────────────────────────┐
-#    │  The groupId "io.typemorph" requires ownership of typemorph.io.    │
-#    │  If you do NOT own that domain, change the groupId in all POMs to  │
-#    │  "io.github.sonicstrain" — it is auto-verified via your GitHub     │
-#    │  account with no extra steps.                                       │
-#    └─────────────────────────────────────────────────────────────────────┘
-#    Steps for either option:
-#      1. Go to https://central.sonatype.com/ and sign in.
-#      2. Click "Add Namespace" and register "io.typemorph" or
-#         "io.github.sonicstrain".
-#      3. For "io.typemorph": verify by adding the displayed TXT record to
-#         your domain's DNS and clicking "Verify".
-#      4. For "io.github.sonicstrain": it verifies automatically.
+#    The groupId is "io.github.sonicstrain" — auto-verified by GitHub,
+#    no domain ownership or DNS step required.
+#      1. Go to https://central.sonatype.com/ and sign in with your GitHub account.
+#      2. Click "Add Namespace" and register "io.github.sonicstrain".
+#      3. Verification is automatic — no DNS record needed.
 #
 # B. Sonatype Central Portal token
 #      1. At https://central.sonatype.com/account → "Generate User Token".

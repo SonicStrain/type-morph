@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.typemorph</groupId>
+        <groupId>io.github.sonicstrain</groupId>
         <artifactId>type-morph-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>

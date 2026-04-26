@@ -5,7 +5,7 @@
              https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.typemorph</groupId>
+    <groupId>io.github.sonicstrain</groupId>
     <artifactId>type-morph-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -73,7 +73,7 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>io.typemorph</groupId>
+                <groupId>io.github.sonicstrain</groupId>
                 <artifactId>type-morph-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -145,10 +145,8 @@
           mvn deploy -P release  deploys to Maven Central via Sonatype Central Portal
 
         GROUP ID NOTE
-        The groupId "io.typemorph" requires verified ownership of typemorph.io.
-        If you do not own that domain, change the groupId in ALL pom.xml files
-        to "io.github.sonicstrain", which is auto-verified by your GitHub account.
-        See CHANGELOG.md for the full setup checklist.
+        The groupId "io.github.sonicstrain" is auto-verified by your GitHub account
+        at https://central.sonatype.com/ — no domain ownership or DNS step required.
     -->
     <profiles>
 
