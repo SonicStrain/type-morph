@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Java](https://img.shields.io/badge/Java-17%2B-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.0-informational?logo=apachemaven&logoColor=white)](https://central.sonatype.com/)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.sonicstrain/type-morph-core?label=Maven%20Central&logo=apachemaven&logoColor=white)](https://central.sonatype.com/artifact/io.github.sonicstrain/type-morph-core)
 
 </div>
 
@@ -154,18 +154,18 @@ OrderDto order = morph.map(orderEntity);  // → OrderDto (same method!)
 **Core only (no Spring):**
 ```xml
 <dependency>
-    <groupId>io.typemorph</groupId>
+    <groupId>io.github.sonicstrain</groupId>
     <artifactId>type-morph-core</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
 **Spring Boot starter (includes core):**
 ```xml
 <dependency>
-    <groupId>io.typemorph</groupId>
+    <groupId>io.github.sonicstrain</groupId>
     <artifactId>type-morph-spring-boot-starter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -173,12 +173,12 @@ OrderDto order = morph.map(orderEntity);  // → OrderDto (same method!)
 
 **Core only:**
 ```groovy
-implementation 'io.typemorph:type-morph-core:1.0.0-SNAPSHOT'
+implementation 'io.github.sonicstrain:type-morph-core:1.0.0'
 ```
 
 **Spring Boot starter:**
 ```groovy
-implementation 'io.typemorph:type-morph-spring-boot-starter:1.0.0-SNAPSHOT'
+implementation 'io.github.sonicstrain:type-morph-spring-boot-starter:1.0.0'
 ```
 
 ---
@@ -531,9 +531,9 @@ Add the starter and everything wires up automatically. No `@Bean` definitions re
 
 ```xml
 <dependency>
-    <groupId>io.typemorph</groupId>
+    <groupId>io.github.sonicstrain</groupId>
     <artifactId>type-morph-spring-boot-starter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
