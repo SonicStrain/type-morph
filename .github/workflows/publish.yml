@@ -1,0 +1,206 @@
+# ============================================================================
+# Publish — triggered when a GitHub Release is created.
+#
+# Publishes to TWO targets in sequence:
+#   1. GitHub Packages  (free, authenticated with GITHUB_TOKEN — auto-provided)
+#   2. Maven Central    (via Sonatype Central Portal — requires setup below)
+#
+# ─── ONE-TIME SETUP CHECKLIST ───────────────────────────────────────────────
+#
+# A. Maven Central namespace
+#    ┌─────────────────────────────────────────────────────────────────────┐
+#    │  The groupId "io.typemorph" requires ownership of typemorph.io.    │
+#    │  If you do NOT own that domain, change the groupId in all POMs to  │
+#    │  "io.github.sonicstrain" — it is auto-verified via your GitHub     │
+#    │  account with no extra steps.                                       │
+#    └─────────────────────────────────────────────────────────────────────┘
+#    Steps for either option:
+#      1. Go to https://central.sonatype.com/ and sign in.
+#      2. Click "Add Namespace" and register "io.typemorph" or
+#         "io.github.sonicstrain".
+#      3. For "io.typemorph": verify by adding the displayed TXT record to
+#         your domain's DNS and clicking "Verify".
+#      4. For "io.github.sonicstrain": it verifies automatically.
+#
+# B. Sonatype Central Portal token
+#      1. At https://central.sonatype.com/account → "Generate User Token".
+#      2. Copy the username and password from the generated token.
+#      3. In your GitHub repo: Settings → Secrets → Actions → New secret:
+#           CENTRAL_USERNAME  ← paste the token username
+#           CENTRAL_PASSWORD  ← paste the token password
+#
+# C. GPG signing key
+#      1. Generate a key (if you don't have one):
+#           gpg --gen-key
+#      2. List your keys and note the 8-character key ID:
+#           gpg --list-secret-keys --keyid-format SHORT
+#      3. Upload the public key to a keyserver:
+#           gpg --keyserver keys.openpgp.org --send-keys YOUR_KEY_ID
+#      4. Export the private key in ASCII armor:
+#           gpg --armor --export-secret-keys YOUR_KEY_ID
+#      5. In your GitHub repo: Settings → Secrets → Actions → New secret:
+#           GPG_PRIVATE_KEY  ← paste the full armored key (-----BEGIN PGP...)
+#           GPG_PASSPHRASE   ← the passphrase you set when creating the key
+#
+# ─── REQUIRED SECRETS SUMMARY ───────────────────────────────────────────────
+#   CENTRAL_USERNAME   Sonatype Central Portal token username
+#   CENTRAL_PASSWORD   Sonatype Central Portal token password
+#   GPG_PRIVATE_KEY    ASCII-armored GPG private key
+#   GPG_PASSPHRASE     GPG key passphrase
+#   (GITHUB_TOKEN is provided automatically — no setup needed)
+# ============================================================================
+
+name: Publish
+
+on:
+  release:
+    types: [ created ]
+
+jobs:
+  publish:
+    name: Publish to GitHub Packages + Maven Central
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # needed to attach JARs to the GitHub Release
+      packages: write   # needed to push to GitHub Packages
+
+    steps:
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 1. Checkout
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 2. JDK 17
+      #    No server-id / settings here — we write our own settings.xml below
+      #    so we can configure both the "github" and "central" servers in one
+      #    file without two conflicting setup-java steps.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 3. Maven dependency cache
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 4. Write Maven settings.xml
+      #    Configures credentials for both publishing targets in one file:
+      #      • github  → GITHUB_TOKEN  (GitHub Packages)
+      #      • central → CENTRAL_*    (Sonatype Central Portal)
+      #    Maven resolves ${env.VAR} from the process environment at runtime.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Write Maven settings.xml
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${env.GITHUB_ACTOR}</username>
+                <password>${env.GITHUB_TOKEN}</password>
+              </server>
+              <server>
+                <id>central</id>
+                <username>${env.CENTRAL_USERNAME}</username>
+                <password>${env.CENTRAL_PASSWORD}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 5. Set release version from Git tag
+      #    Releases are tagged "v1.2.3" — strip the leading "v" and apply it
+      #    to all module POMs via the versions plugin.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Set release version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Release version: $VERSION"
+          mvn -B versions:set \
+              -DnewVersion="$VERSION" \
+              -DgenerateBackupPoms=false \
+              --no-transfer-progress
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 6. Build and run all tests
+      #    Full test suite must pass before any artifact is published.
+      #    Tests are skipped in the deploy steps below (already verified here).
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Build and verify
+        run: mvn -B verify --no-transfer-progress
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 7. Publish → GitHub Packages
+      #    Uses the "github" profile (distributionManagement in pom.xml).
+      #    The standard maven-deploy-plugin uploads the plain JARs (no sources,
+      #    no javadoc, no signatures — GitHub Packages has no such requirements).
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Publish to GitHub Packages
+        run: mvn -B deploy -DskipTests -P github --no-transfer-progress
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }}
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 8. Import GPG signing key
+      #    The crazy-max action imports the key into the keyring and caches
+      #    the passphrase in gpg-agent so maven-gpg-plugin can sign without
+      #    any interactive prompt.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Import GPG signing key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 9. Publish → Maven Central
+      #    Uses the "release" profile which activates:
+      #      • maven-source-plugin   → *-sources.jar
+      #      • maven-javadoc-plugin  → *-javadoc.jar
+      #      • maven-gpg-plugin      → .asc signatures for every artifact
+      #      • central-publishing-maven-plugin → uploads bundle to Central Portal
+      #
+      #    MAVEN_GPG_PASSPHRASE is read by maven-gpg-plugin (3.x) to supply
+      #    the passphrase via --pinentry-mode loopback (no TTY needed).
+      #
+      #    CENTRAL_USERNAME / CENTRAL_PASSWORD are resolved from settings.xml
+      #    via ${env.CENTRAL_USERNAME} / ${env.CENTRAL_PASSWORD}.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Publish to Maven Central
+        run: mvn -B deploy -DskipTests -P release --no-transfer-progress
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 10. Attach JARs to the GitHub Release
+      #     Lets users download the binaries directly from the Releases page
+      #     without needing Maven at all.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Attach JARs to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            type-morph-core/target/type-morph-core-*.jar
+            type-morph-spring-boot-starter/target/type-morph-spring-boot-starter-*.jar
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
