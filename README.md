@@ -1,6 +1,20 @@
-# type-morph
+<div align="center">
 
-**Zero-boilerplate class mapping for Java — with polymorphic method support and annotation-driven field binding.**
+# 🔄 type-morph
+
+### Zero-boilerplate class mapping for Java
+
+*Polymorphic method support &nbsp;·&nbsp; Annotation-driven field binding &nbsp;·&nbsp; Spring Boot ready*
+
+[![CI](https://github.com/SonicStrain/type-morph/actions/workflows/ci.yml/badge.svg?branch=release)](https://github.com/SonicStrain/type-morph/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Java](https://img.shields.io/badge/Java-17%2B-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.0-informational?logo=apachemaven&logoColor=white)](https://central.sonatype.com/)
+
+</div>
+
+---
 
 `type-morph` is a lightweight Java library that eliminates the repetitive code required to map between two different classes (e.g., Entity ↔ DTO). It provides two complementary approaches: **lambda-based mapping** for full manual control and **annotation-driven reflective mapping** for automatic field-level binding — with a shared `map()` call that works across all registered type pairs.
 
